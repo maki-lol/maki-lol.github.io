@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Sphere with Brighter Lighting using three.js</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<script src="https://threejs.org/build/three.js"></script>
+<script>
+    // Set up the scene, camera, and renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Create a sphere
+    const geometry = new THREE.SphereGeometry(1, 32, 32);
+    const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.y = 0.5; // Adjust sphere's position so it's not half-buried in the ground
+    sphere.castShadow = true;
+    scene.add(sphere);
+
+    // Create a ground plane to receive shadows
+    const groundGeometry = new THREE.PlaneGeometry(20, 20, 32, 32);
+    const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.5 });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -1.1; // Adjust ground's position to prevent z-fighting with the sphere
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Set up the light
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Increased light intensity
+    directionalLight.position.set(5, 10, 5);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+
+    // Ambient light to illuminate the whole scene
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Increased ambient light intensity
+    scene.add(ambientLight);
+
+    // Set up mouse and wheel event handling
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+
+    const onMouseMove = (event) => {
+        const { clientX, clientY } = event;
+        const mouseDelta = {
+            x: clientX - previousMousePosition.x,
+            y: clientY - previousMousePosition.y
+        };
+
+        if (isDragging) {
+            const rotationQuaternion = new THREE.Quaternion()
+                .setFromEuler(new THREE.Euler(
+                    mouseDelta.y * 0.01,
+                    mouseDelta.x * 0.01,
+                    0,
+                    'XYZ'
+                ));
+
+            sphere.quaternion.multiplyQuaternions(rotationQuaternion, sphere.quaternion);
+        }
+
+        previousMousePosition = { x: clientX, y: clientY };
+    };
+
+    const onMouseDown = () => {
+        isDragging = true;
+    };
+
+    const onMouseUp = () => {
+        isDragging = false;
+    };
+
+    const onWheel = (event) => {
+        const scaleFactor = event.deltaY > 0 ? 1.1 : 0.9;
+        sphere.scale.multiplyScalar(scaleFactor);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('wheel', onWheel);
+
+    // Set the initial camera position and orientation
+    camera.position.z = 5;
+
+    // Render the scene
+    const animate = () => {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    };
+
+    animate();
+</script>
+</body>
+</html>
