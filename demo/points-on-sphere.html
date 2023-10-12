@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>10 Points on a Sphere with Arrows and Varying Size/Opacity using SVG</title>
+</head>
+<body>
+<svg width="500" height="500">
+    <!-- Draw a sphere (circle) with specified colors -->
+    <circle cx="250" cy="250" r="200" fill="none" stroke="gray" stroke-width="2" />
+
+    <!-- Calculate and draw 10 points on the sphere -->
+    <g id="points"></g>
+
+    <!-- Draw arrows from horizontal start point to selected points -->
+    <g id="arrows"></g>
+</svg>
+
+<button id="downloadButton">Download SVG</button>
+
+<script type="text/javascript">
+    const svg = document.querySelector('svg');
+    const pointsGroup = document.getElementById('points');
+    const arrowsGroup = document.getElementById('arrows');
+    const numPoints = 10;
+
+    // 選択する3点のインデックス (適宜変更してください)
+    const selectedPointIndices = [0, 3, 6];
+
+    const points = [];
+
+    for (let i = 0; i < numPoints; i++) {
+        const theta = Math.random() * Math.PI; // 緯度
+        const phi = Math.random() * 2 * Math.PI; // 経度
+
+        const distance = Math.random() * 200; // 表面からの距離
+        const x = 250 + distance * Math.sin(theta) * Math.cos(phi); // 250は中心のx座標
+        const y = 250 + distance * Math.sin(theta) * Math.sin(phi); // 250は中心のy座標
+
+        // 距離に応じたサイズと透明度の計算
+        const size = (1 - distance / 200) * 15 + 1; // 1から16の範囲でサイズを設定
+        const opacity = 0.1 + (1 - distance / 200) * 0.7; // 透明度
+
+        points.push({ x, y, size, opacity });
+
+        // 描画する点を追加
+        const point = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        point.setAttribute('cx', x);
+        point.setAttribute('cy', y);
+        point.setAttribute('r', size);
+        point.setAttribute('fill', `rgba(0, 0, 0, ${opacity})`);
+        pointsGroup.appendChild(point);
+    }
+
+    // 色の配列: 紫色、オレンジ、紺色
+    const lineColors = ['purple', 'orange', 'navy'];
+
+    // 選択された点と水平線上の矢印を描画
+    for (let i = 0; i < selectedPointIndices.length; i++) {
+        const index = selectedPointIndices[i];
+        const startPoint = { x: 0, y: points[index].y }; // 水平線上の始点
+
+        // 矢印の描画
+        const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        arrow.setAttribute('x1', startPoint.x);
+        arrow.setAttribute('y1', startPoint.y);
+        arrow.setAttribute('x2', points[index].x);
+        arrow.setAttribute('y2', points[index].y);
+        arrow.setAttribute('stroke', `${lineColors[i]}`);
+        arrow.setAttribute('stroke-width', 2); // 太さを固定
+        arrow.setAttribute('stroke-opacity', `${points[index].opacity}`); // 透明度を点の透明度に設定
+        arrow.setAttribute('marker-end', 'url(#arrowhead)');
+        arrowsGroup.appendChild(arrow);
+    }
+
+    // SVGをダウンロードする関数
+    function downloadSVG() {
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const blob = new Blob([svgData], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'points_on_sphere.svg';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // ダウンロードボタンにイベントリスナーを追加
+    const downloadButton = document.getElementById('downloadButton');
+    downloadButton.addEventListener('click', downloadSVG);
+</script>
+
+<!-- Arrowhead marker definition -->
+<defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="black" />
+    </marker>
+</defs>
+</body>
+</html>
